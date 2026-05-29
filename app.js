@@ -91,6 +91,7 @@ const fileLineCounts = {
 
 // --- Page Initialization ---
 window.addEventListener('DOMContentLoaded', () => {
+  loadProfileFromLocalStorage();
   loadFile(currentState.activeFile);
   updateVersionUI();
   updateDockUI();
@@ -570,7 +571,7 @@ function commitChanges() {
   const input = document.getElementById('gitCommitMsg');
   const msg = input.value.trim();
   if (!msg) {
-    alert("Please enter a commit message!");
+    showToast("Source Control", "Please enter a commit message!", "warning");
     return;
   }
   
@@ -627,6 +628,164 @@ function copyTerminalCode() {
   });
 }
 
+// --- Custom Toast Notification Engine ---
+function showToast(title, message, type = 'info', duration = 4000) {
+  const container = document.getElementById('toast-container');
+  if (!container) return;
+
+  const toast = document.createElement('div');
+  toast.className = `toast toast-${type}`;
+
+  // Select icon based on type
+  let iconClass = 'fa-circle-info';
+  if (type === 'success') iconClass = 'fa-circle-check';
+  if (type === 'error') iconClass = 'fa-circle-xmark';
+  if (type === 'warning') iconClass = 'fa-triangle-exclamation';
+
+  toast.innerHTML = `
+    <div class="toast-icon"><i class="fa-solid ${iconClass}"></i></div>
+    <div class="toast-content">
+      <div class="toast-title">${title}</div>
+      <div class="toast-message">${message}</div>
+    </div>
+    <button class="toast-close" aria-label="Close message">&times;</button>
+    <div class="toast-progress" style="animation-duration: ${duration}ms;"></div>
+  `;
+
+  container.appendChild(toast);
+
+  // Event listener to close manually
+  const closeBtn = toast.querySelector('.toast-close');
+  closeBtn.addEventListener('click', () => {
+    dismissToast(toast);
+  });
+
+  // Auto dismiss
+  const autoDismissTimer = setTimeout(() => {
+    dismissToast(toast);
+  }, duration);
+
+  function dismissToast(toastEl) {
+    if (toastEl.classList.contains('removing')) return;
+    toastEl.classList.add('removing');
+    clearTimeout(autoDismissTimer);
+    
+    // Remove from DOM after slide-out animation finishes
+    toastEl.addEventListener('animationend', (e) => {
+      if (e.animationName === 'toast-fade-out') {
+        toastEl.remove();
+      }
+    });
+  }
+}
+
+// --- Custom Confirm Dialog Engine ---
+let activeConfirmCallback = null;
+
+function showConfirmDialog(title, message, onConfirm) {
+  const overlay = document.getElementById('confirmDialogOverlay');
+  const titleEl = document.getElementById('confirmDialogTitle');
+  const messageEl = document.getElementById('confirmDialogMessage');
+  const confirmBtn = document.getElementById('confirmDialogConfirmBtn');
+
+  if (!overlay || !titleEl || !messageEl || !confirmBtn) return;
+
+  titleEl.innerText = title;
+  messageEl.innerText = message;
+  activeConfirmCallback = onConfirm;
+
+  // Setup confirm click handler
+  confirmBtn.onclick = () => {
+    closeConfirmDialog();
+    if (activeConfirmCallback) {
+      activeConfirmCallback();
+      activeConfirmCallback = null;
+    }
+  };
+
+  overlay.style.display = 'flex';
+  overlay.offsetHeight; // force reflow
+  overlay.classList.add('active');
+}
+
+function closeConfirmDialog() {
+  const overlay = document.getElementById('confirmDialogOverlay');
+  if (!overlay) return;
+  overlay.classList.remove('active');
+  setTimeout(() => {
+    if (!overlay.classList.contains('active')) {
+      overlay.style.display = 'none';
+    }
+  }, 250);
+}
+
+function closeConfirmDialogOutside(e) {
+  if (e.target.id === 'confirmDialogOverlay') {
+    closeConfirmDialog();
+  }
+}
+
+// --- Password Visibility Toggle Helper ---
+function togglePasswordVisibility(inputId, iconEl) {
+  const input = document.getElementById(inputId);
+  if (!input) return;
+  
+  if (input.type === 'password') {
+    input.type = 'text';
+    iconEl.classList.remove('fa-eye');
+    iconEl.classList.add('fa-eye-slash');
+  } else {
+    input.type = 'password';
+    iconEl.classList.remove('fa-eye-slash');
+    iconEl.classList.add('fa-eye');
+  }
+}
+
+// --- Inline Login Modal Errors & Success Helper ---
+function clearAuthError() {
+  const errorDiv = document.getElementById('authErrorMessage');
+  if (errorDiv) {
+    errorDiv.style.display = 'none';
+    const errorText = errorDiv.querySelector('#authErrorText');
+    if (errorText) errorText.innerText = '';
+  }
+}
+
+function showAuthError(msg) {
+  const errorDiv = document.getElementById('authErrorMessage');
+  const errorText = document.getElementById('authErrorText');
+  if (errorDiv && errorText) {
+    errorText.innerText = msg;
+    errorDiv.style.display = 'flex';
+    // Trigger CSS shaking animation
+    errorDiv.style.animation = 'none';
+    errorDiv.offsetHeight; /* trigger reflow */
+    errorDiv.style.animation = null;
+  }
+}
+
+function showAuthSuccess(title, subtitle, callback) {
+  const formContent = document.getElementById('authFormContent');
+  const successScreen = document.getElementById('authSuccessScreen');
+  const successTitle = document.getElementById('authSuccessTitle');
+  const successSubtitle = document.getElementById('authSuccessSubtitle');
+  
+  if (formContent && successScreen) {
+    successTitle.innerText = title;
+    successSubtitle.innerText = subtitle;
+    
+    formContent.style.display = 'none';
+    successScreen.style.display = 'flex';
+    
+    if (callback) callback();
+    
+    // Auto close modal after 1.5 seconds
+    setTimeout(() => {
+      closeLoginModal();
+    }, 1500);
+  }
+}
+
 // --- Login Modal Methods ---
 function openLoginModal() {
   document.getElementById('loginModalOverlay').classList.add('active');
@@ -634,6 +793,34 @@ function openLoginModal() {
 
 function closeLoginModal() {
   document.getElementById('loginModalOverlay').classList.remove('active');
+  // Clear forms and reset back to form display after animation completes
+  setTimeout(() => {
+    clearAuthError();
+    const formContent = document.getElementById('authFormContent');
+    const successScreen = document.getElementById('authSuccessScreen');
+    if (formContent && successScreen) {
+      formContent.style.display = 'block';
+      successScreen.style.display = 'none';
+    }
+    
+    // Reset inputs
+    document.getElementById('loginEmail').value = '';
+    document.getElementById('loginPassword').value = '';
+    document.getElementById('registerEmail').value = '';
+    document.getElementById('registerPassword').value = '';
+    document.getElementById('registerConfirmPassword').value = '';
+    
+    // Reset password field types to password
+    document.getElementById('loginPassword').type = 'password';
+    document.getElementById('registerPassword').type = 'password';
+    document.getElementById('registerConfirmPassword').type = 'password';
+    
+    // Reset all toggle password icon classes
+    document.querySelectorAll('.toggle-password').forEach(icon => {
+      icon.classList.remove('fa-eye-slash');
+      icon.classList.add('fa-eye');
+    });
+  }, 300);
 }
 
 function closeLoginModalOutside(e) {
@@ -656,6 +843,8 @@ async function handleLoginSubmit(e) {
   const email = document.getElementById('loginEmail').value;
   const password = document.getElementById('loginPassword').value;
   
+  clearAuthError();
+  
   if (!supabaseClient) {
     mockLoginSuccess(email);
     return;
@@ -669,11 +858,12 @@ async function handleLoginSubmit(e) {
     
     if (error) throw error;
     
-    closeLoginModal();
-    updateUserSessionUI(data.user.email);
-    alert(`⚡ Logged in successfully via Supabase as ${data.user.email}!`);
+    showAuthSuccess("Welcome back!", `Logged in successfully as ${data.user.email}!`, () => {
+      updateUserSessionUI(data.user.email);
+      showToast("Success", `Logged in as ${data.user.email}`, "success");
+    });
   } catch (error) {
-    alert(`Login Error: ${error.message}`);
+    showAuthError(`Login Error: ${error.message}`);
   }
 }
 
@@ -683,13 +873,15 @@ async function handleRegisterSubmit(e) {
   const password = document.getElementById('registerPassword').value;
   const confirmPassword = document.getElementById('registerConfirmPassword').value;
   
+  clearAuthError();
+  
   if (password !== confirmPassword) {
-    alert("Passwords do not match!");
+    showAuthError("Passwords do not match!");
     return;
   }
   
   if (password.length < 6) {
-    alert("Password must be at least 6 characters long!");
+    showAuthError("Password must be at least 6 characters long!");
     return;
   }
   
@@ -714,22 +906,28 @@ async function handleRegisterSubmit(e) {
     console.log("VoltC Auth Register Success Data:", data);
     
     if (data.user && data.session === null) {
-      alert(`⚡ Verification email sent to ${email}! Please check your inbox.`);
-      closeLoginModal();
+      showAuthSuccess("Check your email!", `Verification email sent to ${email}.`, () => {
+        showToast("Verification Email", `Sent to ${email}`, "warning", 5000);
+      });
     } else if (data.user) {
-      closeLoginModal();
-      updateUserSessionUI(data.user.email);
-      alert(`⚡ Account created and logged in as ${data.user.email}!`);
+      showAuthSuccess("Welcome!", `Account created for ${data.user.email}!`, () => {
+        updateUserSessionUI(data.user.email);
+        showToast("Success", `Account registered and logged in as ${data.user.email}`, "success");
+      });
     }
   } catch (error) {
     console.error("VoltC Auth Catch Error:", error);
-    alert(`Registration Error: ${error.message}`);
+    showAuthError(`Registration Error: ${error.message}`);
   }
 }
 
 async function mockOAuthLogin(provider) {
   if (!supabaseClient) {
-    mockLoginSuccess(`auth-${provider.toLowerCase()}@voltc-user.com`);
+    showAuthSuccess("OAuth Success", `Simulated authentication via ${provider}!`, () => {
+      const mockEmail = `auth-${provider.toLowerCase()}@voltc-user.com`;
+      updateUserSessionUI(mockEmail);
+      showToast("OAuth Connected", `Logged in with ${provider} as ${mockEmail}`, "success");
+    });
     return;
   }
   
@@ -742,7 +940,7 @@ async function mockOAuthLogin(provider) {
     });
     if (error) throw error;
   } catch (error) {
-    alert(`OAuth Login Error: ${error.message}`);
+    showAuthError(`OAuth Login Error: ${error.message}`);
   }
 }
 
@@ -753,9 +951,10 @@ function updateUserSessionUI(email) {
 }
 
 function mockLoginSuccess(email) {
-  closeLoginModal();
-  updateUserSessionUI(email);
-  alert(`⚡ Logged in successfully (Mock Mode) as ${email}!`);
+  showAuthSuccess("Success!", `Logged in successfully as ${email}.`, () => {
+    updateUserSessionUI(email);
+    showToast("Logged In", `Welcome back, ${email}!`, "success");
+  });
 }
 
 function toggleUserDropdown() {
@@ -775,18 +974,24 @@ window.addEventListener('click', (e) => {
 });
 
 async function logout() {
-  if (supabaseClient) {
-    try {
-      const { error } = await supabaseClient.auth.signOut();
-      if (error) throw error;
-    } catch (e) {
-      console.error("Error signing out from Supabase: ", e);
+  showConfirmDialog(
+    "Confirm Logout", 
+    "Are you sure you want to sign out of VoltC?", 
+    async () => {
+      if (supabaseClient) {
+        try {
+          const { error } = await supabaseClient.auth.signOut();
+          if (error) throw error;
+        } catch (e) {
+          console.error("Error signing out from Supabase: ", e);
+        }
+      }
+      
+      document.getElementById('navLoginBtn').style.display = 'inline-flex';
+      document.getElementById('userProfileMenu').style.display = 'none';
+      showToast("Logged Out", "Signed out of session successfully.", "info");
     }
-  }
-  
-  document.getElementById('navLoginBtn').style.display = 'inline-flex';
-  document.getElementById('userProfileMenu').style.display = 'none';
-  alert("Logged out successfully.");
+  );
 }
 
 // --- Newsletter Subscription ---
@@ -795,7 +1000,7 @@ function subscribeNewsletter() {
   const email = emailInput.value.trim();
   
   if (!email) {
-    alert("Please enter a valid email address!");
+    showToast("Newsletter Subscription", "Please enter a valid email address!", "error");
     return;
   }
   
@@ -839,4 +1044,178 @@ function submitFeedbackForm(e) {
       submitBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Send';
     }
   }, 4000);
+}
+
+// --- Profile & Credentials State Management ---
+let profileData = {
+  displayName: 'VoltC Developer',
+  bio: 'Full-stack Ubuntu developer...',
+  gitToken: '',
+  supabaseUrl: '',
+  supabaseKey: '',
+  avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=80&q=80'
+};
+
+function loadProfileFromLocalStorage() {
+  const saved = localStorage.getItem('voltc_profile_data');
+  if (saved) {
+    try {
+      profileData = { ...profileData, ...JSON.parse(saved) };
+    } catch (e) {
+      console.error("Failed to parse stored profile data", e);
+    }
+  }
+  
+  // Apply saved state to UI elements
+  const avatarElements = [
+    document.getElementById('userAvatar'),
+    document.getElementById('profileModalAvatar')
+  ];
+  avatarElements.forEach(img => {
+    if (img && profileData.avatar) {
+      img.src = profileData.avatar;
+    }
+  });
+
+  const displayNameEl = document.getElementById('profileModalDisplayName');
+  if (displayNameEl && profileData.displayName) {
+    displayNameEl.innerText = profileData.displayName;
+  }
+}
+
+// Modal Toggle Handlers
+function openProfileModal() {
+  // Populate form fields with current state
+  const displayNameInput = document.getElementById('profileDisplayName');
+  const bioInput = document.getElementById('profileBio');
+  const gitTokenInput = document.getElementById('profileGitToken');
+  const supabaseUrlInput = document.getElementById('profileSupabaseUrl');
+  const supabaseKeyInput = document.getElementById('profileSupabaseKey');
+
+  if (displayNameInput) displayNameInput.value = profileData.displayName || '';
+  if (bioInput) bioInput.value = profileData.bio || '';
+  if (gitTokenInput) gitTokenInput.value = profileData.gitToken || '';
+  if (supabaseUrlInput) supabaseUrlInput.value = profileData.supabaseUrl || '';
+  if (supabaseKeyInput) supabaseKeyInput.value = profileData.supabaseKey || '';
+
+  // Update header text based on active login session or defaults
+  const emailEl = document.getElementById('profileModalEmail');
+  const dropdownEmail = document.getElementById('dropdownUserEmail');
+  if (emailEl && dropdownEmail) {
+    emailEl.innerText = dropdownEmail.innerText || 'user@voltc.com';
+  }
+
+  const displayNameEl = document.getElementById('profileModalDisplayName');
+  if (displayNameEl) {
+    displayNameEl.innerText = profileData.displayName || 'Developer';
+  }
+
+  const avatarImg = document.getElementById('profileModalAvatar');
+  if (avatarImg && profileData.avatar) {
+    avatarImg.src = profileData.avatar;
+  }
+
+  // Display overlay
+  document.getElementById('profileModalOverlay').classList.add('active');
+}
+
+function closeProfileModal() {
+  document.getElementById('profileModalOverlay').classList.remove('active');
+}
+
+function closeProfileModalOutside(e) {
+  if (e.target.id === 'profileModalOverlay') {
+    closeProfileModal();
+  }
+}
+
+// Profile Tab Switcher
+function switchProfileTab(tab) {
+  const isInfo = tab === 'info';
+  
+  const tabInfoBtn = document.getElementById('tabBtnProfileInfo');
+  const tabCredsBtn = document.getElementById('tabBtnProfileCreds');
+  const paneInfo = document.getElementById('paneProfileInfo');
+  const paneCreds = document.getElementById('paneProfileCreds');
+
+  if (tabInfoBtn && tabCredsBtn && paneInfo && paneCreds) {
+    tabInfoBtn.classList.toggle('active', isInfo);
+    tabCredsBtn.classList.toggle('active', !isInfo);
+    paneInfo.style.display = isInfo ? 'block' : 'none';
+    paneCreds.style.display = !isInfo ? 'block' : 'none';
+  }
+}
+
+// Form Submission Handlers
+function handleProfileSave(e) {
+  e.preventDefault();
+  
+  const displayName = document.getElementById('profileDisplayName').value.trim();
+  const bio = document.getElementById('profileBio').value.trim();
+
+  profileData.displayName = displayName;
+  profileData.bio = bio;
+
+  // Save to localStorage
+  localStorage.setItem('voltc_profile_data', JSON.stringify(profileData));
+
+  // Sync visual labels
+  const displayNameEl = document.getElementById('profileModalDisplayName');
+  if (displayNameEl) displayNameEl.innerText = displayName;
+
+  showToast("Profile Updated", "Your bio and display details were saved successfully.", "success");
+}
+
+function handleCredentialsSave(e) {
+  e.preventDefault();
+
+  const gitToken = document.getElementById('profileGitToken').value.trim();
+  const supabaseUrl = document.getElementById('profileSupabaseUrl').value.trim();
+  const supabaseKey = document.getElementById('profileSupabaseKey').value.trim();
+
+  profileData.gitToken = gitToken;
+  profileData.supabaseUrl = supabaseUrl;
+  profileData.supabaseKey = supabaseKey;
+
+  // Save to localStorage
+  localStorage.setItem('voltc_profile_data', JSON.stringify(profileData));
+
+  showToast("Credentials Secured", "API tokens and configuration keys updated.", "success");
+}
+
+// Avatar File Uploading Logic
+function handleAvatarUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  // Ensure file is an image
+  if (!file.type.startsWith('image/')) {
+    showToast("Invalid File Type", "Please upload a valid image file.", "error");
+    return;
+  }
+
+  // Check file size (cap at 2MB for localStorage)
+  if (file.size > 2 * 1024 * 1024) {
+    showToast("File Too Large", "Please select an image smaller than 2MB.", "warning");
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const base64Url = e.target.result;
+    
+    // Save to state and storage
+    profileData.avatar = base64Url;
+    localStorage.setItem('voltc_profile_data', JSON.stringify(profileData));
+
+    // Update avatar elements instantly
+    const avatarEl = document.getElementById('userAvatar');
+    const modalAvatarEl = document.getElementById('profileModalAvatar');
+    if (avatarEl) avatarEl.src = base64Url;
+    if (modalAvatarEl) modalAvatarEl.src = base64Url;
+
+    showToast("Avatar Changed", "Your new profile picture was uploaded successfully.", "success");
+  };
+
+  reader.readAsDataURL(file);
 }

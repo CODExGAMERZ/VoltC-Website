@@ -51,10 +51,11 @@
         <button class="btn-nav-login" onclick="openLoginModal()" id="navLoginBtn"><i class="fa-solid fa-user"></i> Login</button>
         <div class="user-profile-menu" id="userProfileMenu" style="display: none; position: relative;">
           <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=80&q=80" alt="Profile" class="user-avatar" id="userAvatar" onclick="toggleUserDropdown()" style="width: 38px; height: 38px; border-radius: 50%; cursor: pointer; border: 2px solid var(--accent-crimson);">
-          <div class="user-dropdown" id="userDropdown" style="display: none; position: absolute; top: 48px; right: 0; background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 12px; min-width: 150px; box-shadow: var(--shadow-md); z-index: 150;">
+          <div class="user-dropdown" id="userDropdown" style="display: none; position: absolute; top: 48px; right: 0; background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 12px; min-width: 170px; box-shadow: var(--shadow-md); z-index: 150;">
             <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-primary); margin-bottom: 8px;" id="dropdownUserEmail">user@voltc.com</div>
             <hr style="border-color: var(--border-color); margin-bottom: 8px;">
-            <button onclick="logout()" style="color: var(--color-error); font-size: 0.85rem; font-weight: 600; display: flex; align-items: center; gap: 6px; width: 100%; text-align: left; background: none; border: none; cursor: pointer;"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
+            <button onclick="openProfileModal()" style="color: var(--text-primary); font-size: 0.85rem; font-weight: 600; display: flex; align-items: center; gap: 6px; width: 100%; text-align: left; background: none; border: none; cursor: pointer; margin-bottom: 8px; padding: 6px 8px; border-radius: var(--radius-sm);"><i class="fa-solid fa-user-gear"></i> Profile Settings</button>
+            <button onclick="logout()" style="color: var(--color-error); font-size: 0.85rem; font-weight: 600; display: flex; align-items: center; gap: 6px; width: 100%; text-align: left; background: none; border: none; cursor: pointer; padding: 6px 8px; border-radius: var(--radius-sm);"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
           </div>
         </div>
         <a href="#install" class="btn-nav-download">Download v2.0</a>
@@ -659,57 +660,184 @@
     <div class="login-modal-card neon-glow">
       <button class="login-modal-close" onclick="closeLoginModal()">&times;</button>
       
-      <div class="login-tabs">
-        <button class="login-tab-btn active" id="tabBtnLogin" onclick="switchLoginTab('login')">Sign In</button>
-        <button class="login-tab-btn" id="tabBtnRegister" onclick="switchLoginTab('register')">Sign Up</button>
+      <!-- Inline Auth Feedback -->
+      <div class="auth-error-message" id="authErrorMessage" style="display: none;">
+        <i class="fa-solid fa-triangle-exclamation"></i> <span id="authErrorText">Error message here</span>
       </div>
 
-      <!-- Sign In Pane -->
-      <div class="login-pane active" id="paneLogin">
-        <form onsubmit="handleLoginSubmit(event)" style="display: flex; flex-direction: column; gap: 16px; margin-top: 16px;">
-          <div class="input-group">
-            <label>Email Address</label>
-            <input type="email" id="loginEmail" required placeholder="name@domain.com">
+      <!-- Main Form Wrapper -->
+      <div id="authFormContent">
+        <div class="login-tabs">
+          <button class="login-tab-btn active" id="tabBtnLogin" onclick="switchLoginTab('login')"><i class="fa-solid fa-right-to-bracket"></i> Sign In</button>
+          <button class="login-tab-btn" id="tabBtnRegister" onclick="switchLoginTab('register')"><i class="fa-solid fa-user-plus"></i> Sign Up</button>
+        </div>
+
+        <!-- Sign In Pane -->
+        <div class="login-pane active" id="paneLogin">
+          <form onsubmit="handleLoginSubmit(event)" style="display: flex; flex-direction: column; gap: 16px; margin-top: 16px;">
+            <div class="input-group">
+              <label>Email Address</label>
+              <input type="email" id="loginEmail" required placeholder="name@domain.com">
+            </div>
+            <div class="input-group">
+              <label>Password</label>
+              <div class="password-input-wrapper">
+                <input type="password" id="loginPassword" required placeholder="••••••••">
+                <i class="fa-solid fa-eye toggle-password" onclick="togglePasswordVisibility('loginPassword', this)"></i>
+              </div>
+            </div>
+            <button type="submit" class="btn-primary" style="width: 100%; justify-content: center; font-weight: bold;"><i class="fa-solid fa-right-to-bracket"></i> Login</button>
+          </form>
+        </div>
+
+        <!-- Sign Up Pane -->
+        <div class="login-pane" id="paneRegister">
+          <form onsubmit="handleRegisterSubmit(event)" style="display: flex; flex-direction: column; gap: 16px; margin-top: 16px;">
+            <div class="input-group">
+              <label>Email Address</label>
+              <input type="email" id="registerEmail" required placeholder="name@domain.com">
+            </div>
+            <div class="input-group">
+              <label>Create Password</label>
+              <div class="password-input-wrapper">
+                <input type="password" id="registerPassword" required placeholder="••••••••">
+                <i class="fa-solid fa-eye toggle-password" onclick="togglePasswordVisibility('registerPassword', this)"></i>
+              </div>
+            </div>
+            <div class="input-group">
+              <label>Confirm Password</label>
+              <div class="password-input-wrapper">
+                <input type="password" id="registerConfirmPassword" required placeholder="••••••••">
+                <i class="fa-solid fa-eye toggle-password" onclick="togglePasswordVisibility('registerConfirmPassword', this)"></i>
+              </div>
+            </div>
+            <button type="submit" class="btn-primary" style="width: 100%; justify-content: center; font-weight: bold;"><i class="fa-solid fa-user-plus"></i> Create Account</button>
+          </form>
+        </div>
+
+        <!-- OAuth Mocking -->
+        <div style="margin-top: 24px; text-align: center;">
+          <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; position: relative;">
+            <span style="background: var(--bg-surface); padding: 0 10px; z-index: 2; position: relative;">Or continue with</span>
+            <div style="position: absolute; top: 50%; left: 0; right: 0; height: 1px; background: var(--border-color); z-index: 1;"></div>
           </div>
-          <div class="input-group">
-            <label>Password</label>
-            <input type="password" id="loginPassword" required placeholder="••••••••">
+          <div style="display: flex; justify-content: center; gap: 12px;">
+            <button class="btn-secondary" onclick="mockOAuthLogin('GitHub')" style="padding: 10px 20px; font-size: 0.85rem;"><i class="fa-brands fa-github"></i> GitHub</button>
+            <button class="btn-secondary" onclick="mockOAuthLogin('Google')" style="padding: 10px 20px; font-size: 0.85rem;"><i class="fa-brands fa-google"></i> Google</button>
           </div>
-          <button type="submit" class="btn-primary" style="width: 100%; justify-content: center; font-weight: bold;"><i class="fa-solid fa-right-to-bracket"></i> Login</button>
+        </div>
+      </div>
+
+      <!-- Auth Success Screen -->
+      <div class="auth-success-screen" id="authSuccessScreen" style="display: none;">
+        <div class="checkmark-wrapper">
+          <svg class="checkmark-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
+            <circle class="checkmark-circle" cx="26" cy="26" r="25" fill="none"/>
+            <path class="checkmark-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
+          </svg>
+        </div>
+        <h3 class="success-title" id="authSuccessTitle">Welcome back!</h3>
+        <p class="success-subtitle" id="authSuccessSubtitle">Logged in successfully.</p>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Glassmorphism Profile Modal -->
+  <div class="login-modal-overlay" id="profileModalOverlay" onclick="closeProfileModalOutside(event)">
+    <div class="login-modal-card neon-glow" style="max-width: 500px;">
+      <button class="login-modal-close" onclick="closeProfileModal()">&times;</button>
+      
+      <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px;">
+        <i class="fa-solid fa-user-gear" style="color: var(--accent-crimson); font-size: 1.4rem;"></i>
+        <h3 style="font-family: var(--font-display); font-size: 1.35rem; font-weight: 800; color: #fff; margin: 0;">Profile & Credentials</h3>
+      </div>
+      
+      <div class="login-tabs" style="margin-bottom: 20px;">
+        <button class="login-tab-btn active" id="tabBtnProfileInfo" onclick="switchProfileTab('info')"><i class="fa-solid fa-address-card"></i> Profile Info</button>
+        <button class="login-tab-btn" id="tabBtnProfileCreds" onclick="switchProfileTab('creds')"><i class="fa-solid fa-key"></i> API Credentials</button>
+      </div>
+      
+      <!-- Profile Info Pane -->
+      <div class="login-pane active" id="paneProfileInfo">
+        <form onsubmit="handleProfileSave(event)" style="display: flex; flex-direction: column; gap: 16px;">
+          <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 8px;">
+            <div style="position: relative; width: 64px; height: 64px;">
+              <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=80&q=80" alt="Avatar" id="profileModalAvatar" style="width: 64px; height: 64px; border-radius: 50%; border: 2px solid var(--accent-crimson); object-fit: cover;">
+              <label for="avatarUploadInput" style="position: absolute; bottom: -2px; right: -2px; background: var(--accent-crimson); width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 1px solid var(--bg-surface);"><i class="fa-solid fa-camera" style="font-size: 0.65rem; color: #fff;"></i></label>
+              <input type="file" id="avatarUploadInput" style="display: none;" accept="image/*" onchange="handleAvatarUpload(event)">
+            </div>
+            <div>
+              <div style="font-weight: 700; color: #fff; font-size: 1.05rem;" id="profileModalDisplayName">Developer</div>
+              <div style="font-size: 0.8rem; color: var(--text-secondary);" id="profileModalEmail">user@voltc.com</div>
+            </div>
+          </div>
+          
+          <div class="input-group">
+            <label>Display Name</label>
+            <input type="text" id="profileDisplayName" required placeholder="VoltC Developer">
+          </div>
+          
+          <div class="input-group">
+            <label>Bio / Description</label>
+            <textarea id="profileBio" rows="2" style="padding: 10px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: rgba(0, 0, 0, 0.25); color: #fff; outline: none; font-size: 0.9rem; font-family: inherit; resize: none;" placeholder="Full-stack Ubuntu developer..."></textarea>
+          </div>
+          
+          <button type="submit" class="btn-primary" style="width: 100%; justify-content: center; font-weight: bold;"><i class="fa-solid fa-floppy-disk"></i> Save Profile</button>
         </form>
       </div>
-
-      <!-- Sign Up Pane -->
-      <div class="login-pane" id="paneRegister">
-        <form onsubmit="handleRegisterSubmit(event)" style="display: flex; flex-direction: column; gap: 16px; margin-top: 16px;">
+      
+      <!-- API Credentials Pane -->
+      <div class="login-pane" id="paneProfileCreds" style="display: none;">
+        <form onsubmit="handleCredentialsSave(event)" style="display: flex; flex-direction: column; gap: 16px;">
           <div class="input-group">
-            <label>Email Address</label>
-            <input type="email" id="registerEmail" required placeholder="name@domain.com">
+            <label>GitHub Personal Access Token</label>
+            <div class="password-input-wrapper">
+              <input type="password" id="profileGitToken" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx">
+              <i class="fa-solid fa-eye toggle-password" onclick="togglePasswordVisibility('profileGitToken', this)"></i>
+            </div>
+            <span style="font-size: 0.7rem; color: var(--text-muted); margin-top: -4px;">Required to push and pull private branches in source control.</span>
           </div>
+          
           <div class="input-group">
-            <label>Create Password</label>
-            <input type="password" id="registerPassword" required placeholder="••••••••">
+            <label>Supabase Project URL</label>
+            <input type="text" id="profileSupabaseUrl" placeholder="https://your-project.supabase.co">
+            <span style="font-size: 0.7rem; color: var(--text-muted); margin-top: -4px;">Provide your custom backend instance URL.</span>
           </div>
+          
           <div class="input-group">
-            <label>Confirm Password</label>
-            <input type="password" id="registerConfirmPassword" required placeholder="••••••••">
+            <label>Supabase Anon API Key</label>
+            <div class="password-input-wrapper">
+              <input type="password" id="profileSupabaseKey" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...">
+              <i class="fa-solid fa-eye toggle-password" onclick="togglePasswordVisibility('profileSupabaseKey', this)"></i>
+            </div>
+            <span style="font-size: 0.7rem; color: var(--text-muted); margin-top: -4px;">Direct client auth access token.</span>
           </div>
-          <button type="submit" class="btn-primary" style="width: 100%; justify-content: center; font-weight: bold;"><i class="fa-solid fa-user-plus"></i> Create Account</button>
+          
+          <button type="submit" class="btn-primary" style="width: 100%; justify-content: center; font-weight: bold;"><i class="fa-solid fa-shield-halved"></i> Save Credentials</button>
         </form>
       </div>
+      
+    </div>
+  </div>
 
-      <!-- OAuth Mocking -->
-      <div style="margin-top: 24px; text-align: center;">
-        <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; position: relative;">
-          <span style="background: var(--bg-surface); padding: 0 10px; z-index: 2; position: relative;">Or continue with</span>
-          <div style="position: absolute; top: 50%; left: 0; right: 0; height: 1px; background: var(--border-color); z-index: 1;"></div>
-        </div>
-        <div style="display: flex; justify-content: center; gap: 12px;">
-          <button class="btn-secondary" onclick="mockOAuthLogin('GitHub')" style="padding: 10px 20px; font-size: 0.85rem;"><i class="fa-brands fa-github"></i> GitHub</button>
-          <button class="btn-secondary" onclick="mockOAuthLogin('Google')" style="padding: 10px 20px; font-size: 0.85rem;"><i class="fa-brands fa-google"></i> Google</button>
-        </div>
+  <!-- Toast Container -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- Custom Confirm Dialog -->
+  <div class="confirm-dialog-overlay" id="confirmDialogOverlay" onclick="closeConfirmDialogOutside(event)">
+    <div class="confirm-dialog-card neon-glow">
+      <div class="confirm-dialog-header">
+        <div class="confirm-dialog-icon"><i class="fa-solid fa-circle-question"></i></div>
+        <h3 id="confirmDialogTitle">Confirm Action</h3>
       </div>
-
+      <div class="confirm-dialog-body" id="confirmDialogMessage">
+        Are you sure you want to proceed?
+      </div>
+      <div class="confirm-dialog-actions">
+        <button class="btn-secondary" id="confirmDialogCancelBtn" onclick="closeConfirmDialog()">Cancel</button>
+        <button class="btn-primary" id="confirmDialogConfirmBtn">Confirm</button>
+      </div>
     </div>
   </div>
 
