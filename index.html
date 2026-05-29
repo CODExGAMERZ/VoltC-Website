@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VoltC ⚡ The Intelligent C/C++ IDE for Ubuntu Linux</title>
+  
+  <!-- SEO Meta Tags -->
+  <meta name="description" content="VoltC is a native desktop C/C++ IDE for Ubuntu Linux, featuring GCC sandboxing, Monaco editor, live memory visualizer, and Git support.">
+  <meta name="keywords" content="C IDE, Ubuntu IDE, Linux C Editor, Memory Visualizer C, GCC Sandboxed Compiler, VoltC v2">
+  <meta name="author" content="VoltC Team">
+  <meta property="og:title" content="VoltC ⚡ The Intelligent C/C++ IDE for Ubuntu Linux">
+  <meta property="og:description" content="A lightweight, desktop-native IDE powered by FastAPI and Monaco. Try the interactive simulator online!">
+  <meta property="og:type" content="website">
+  
+  <!-- Fonts & Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Background Decorative Grid -->
+  <div class="grid-overlay" id="gridOverlay"></div>
+
+  <!-- Navigation Bar -->
+  <nav class="navbar" id="navbar">
+    <div class="container navbar-container" style="display: flex; width: 100%; justify-content: space-between; align-items: center;">
+      <a href="#" class="logo">
+        <span>⚡</span> VoltC
+      </a>
+      <div class="nav-links">
+        <a href="#simulator" class="active">Simulator</a>
+        <a href="#features">Features</a>
+        <a href="#comparison">v1 vs v2</a>
+        <a href="#install">Install</a>
+      </div>
+      <div class="nav-actions" style="display: flex; align-items: center; gap: 12px;" id="navActions">
+        <button class="btn-nav-login" onclick="openLoginModal()" id="navLoginBtn"><i class="fa-solid fa-user"></i> Login</button>
+        <div class="user-profile-menu" id="userProfileMenu" style="display: none; position: relative;">
+          <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=80&q=80" alt="Profile" class="user-avatar" id="userAvatar" onclick="toggleUserDropdown()" style="width: 38px; height: 38px; border-radius: 50%; cursor: pointer; border: 2px solid var(--accent-crimson);">
+          <div class="user-dropdown" id="userDropdown" style="display: none; position: absolute; top: 48px; right: 0; background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 12px; min-width: 150px; box-shadow: var(--shadow-md); z-index: 150;">
+            <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-primary); margin-bottom: 8px;" id="dropdownUserEmail">user@voltc.com</div>
+            <hr style="border-color: var(--border-color); margin-bottom: 8px;">
+            <button onclick="logout()" style="color: var(--color-error); font-size: 0.85rem; font-weight: 600; display: flex; align-items: center; gap: 6px; width: 100%; text-align: left; background: none; border: none; cursor: pointer;"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
+          </div>
+        </div>
+        <a href="#install" class="btn-nav-download">Download v2.0</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <header class="hero section-padding">
+    <div class="container">
+      <div class="hero-badge-container">
+        <span class="badge badge-crimson badge-glow"><i class="fa-solid fa-bolt"></i> Version 2.0 Stable</span>
+        <span class="badge badge-crimson"><i class="fa-brands fa-linux"></i> Ubuntu Native</span>
+      </div>
+      <h1>The Lightweight C IDE for Ubuntu.<br><span class="text-gradient">Fast, Modern, and Interactive.</span></h1>
+      <p>VoltC bridges the gap between terminal text editors and bloated IDEs. Powered by a high-performance FastAPI core, Monaco, sandboxed GCC, live stack/heap diagramming, and integrated version control.</p>
+      
+      <div class="hero-ctas">
+        <a href="#install" class="btn-primary"><i class="fa-solid fa-download"></i> Get VoltC for Linux</a>
+        <a href="#simulator" class="btn-secondary"><i class="fa-solid fa-play"></i> Try the IDE Simulator</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Interactive IDE Simulator Section -->
+  <section id="simulator" class="simulator-showcase">
+    <div class="container">
+      <div class="section-title" id="simulator-heading">Experience VoltC Live</div>
+      <p class="section-subtitle">Interact with a fully functional mockup of the VoltC interface. Switch themes, open code files, trigger GCC builds, explore pointer diagrams, and commit changes via Git.</p>
+      
+      <!-- IDE Mockup Frame -->
+      <div class="simulator-container theme-midnight-crimson" id="ideSimulator">
+        
+        <!-- Window Top Header Bar -->
+        <header class="sim-header">
+          <div class="sim-window-dots">
+            <span class="sim-dot sim-dot-close"></span>
+            <span class="sim-dot sim-dot-minimize"></span>
+            <span class="sim-dot sim-dot-maximize"></span>
+          </div>
+          <div class="sim-window-title">
+            <i class="fa-solid fa-code"></i> VoltC - <span id="simCurrentFileName">hello.c</span>
+          </div>
+          <div class="sim-window-version-toggle">
+            <button class="sim-ver-btn" id="toggleV1" onclick="switchVersion('v1')">VoltC v1</button>
+            <button class="sim-ver-btn active" id="toggleV2" onclick="switchVersion('v2')">VoltC v2</button>
+          </div>
+        </header>
+
+        <!-- Main IDE Split Layout -->
+        <div class="sim-main">
+          
+          <!-- Sidebar Icon Rack -->
+          <aside class="sim-sidebar">
+            <div class="sim-sidebar-top">
+              <button class="sim-icon-btn active" id="sidebarIconFiles" onclick="toggleDrawer('files')" title="File Explorer">
+                <i class="fa-solid fa-folder-closed"></i>
+              </button>
+              <button class="sim-icon-btn" id="sidebarIconGit" onclick="toggleDrawer('git')" title="Git Source Control" data-badge="2">
+                <i class="fa-solid fa-code-branch"></i>
+              </button>
+            </div>
+            <div class="sim-sidebar-bottom">
+              <button class="sim-icon-btn" id="sidebarIconSettings" onclick="toggleDrawer('settings')" title="Settings">
+                <i class="fa-solid fa-gear"></i>
+              </button>
+            </div>
+          </aside>
+
+          <!-- Drawer Panel (Explorer / Git / Settings) -->
+          <div class="sim-drawer" id="simDrawer">
+            <!-- Header (dynamic based on active drawer mode) -->
+            <div class="sim-drawer-header">
+              <span id="drawerTitle">WORKSPACE</span>
+              <i class="fa-solid fa-chevron-left" style="cursor:pointer;" onclick="closeDrawer()"></i>
+            </div>
+            
+            <!-- Drawer Content (dynamic) -->
+            <div class="sim-drawer-content" id="drawerContent">
+              
+              <!-- File Explorer Tree (default) -->
+              <div id="drawerFilesPane">
+                <div class="sim-tree-item sim-tree-folder">
+                  <i class="fa-solid fa-chevron-down"></i> <i class="fa-solid fa-folder-open"></i> my-project
+                </div>
+                <div class="sim-tree-item active sim-tree-indent" onclick="loadFile('hello.c')" id="fileTabHello">
+                  <i class="fa-solid fa-file-code" style="color: #00a3ff;"></i> hello.c
+                </div>
+                <div class="sim-tree-item sim-tree-indent" onclick="loadFile('pointers.c')" id="fileTabPointers">
+                  <i class="fa-solid fa-file-code" style="color: #00a3ff;"></i> pointers.c
+                </div>
+                <div class="sim-tree-item sim-tree-indent" onclick="loadFile('buggy.c')" id="fileTabBuggy">
+                  <i class="fa-solid fa-file-code" style="color: #e62e52;"></i> buggy.c
+                </div>
+              </div>
+
+              <!-- Git Source Control Pane -->
+              <div id="drawerGitPane" style="display: none;">
+                <div class="sim-git-content">
+                  <div class="sim-git-branch">
+                    <i class="fa-solid fa-code-branch"></i> branch: <span>main</span>
+                  </div>
+                  <div>
+                    <div class="sim-git-section-title">Changes</div>
+                    <div class="sim-git-file-list">
+                      <div class="sim-git-file" onclick="loadFile('buggy.c')">
+                        <span><i class="fa-solid fa-file-circle-exclamation"></i> buggy.c</span>
+                        <span class="sim-git-status-badge sim-git-status-m">M</span>
+                      </div>
+                      <div class="sim-git-file">
+                        <span><i class="fa-solid fa-file-circle-plus"></i> Makefile</span>
+                        <span class="sim-git-status-badge sim-git-status-u">U</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="sim-git-commit-box">
+                    <input type="text" class="sim-git-input" placeholder="Commit message..." id="gitCommitMsg">
+                    <button class="sim-git-commit-btn" onclick="commitChanges()">Commit Changes</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Settings Appearance & Config Pane -->
+              <div id="drawerSettingsPane" style="display: none;">
+                <div class="sim-settings-content">
+                  <div class="sim-settings-section">
+                    <label class="sim-settings-label">Theme Appearance</label>
+                    <div class="sim-theme-grid">
+                      <button class="sim-theme-btn active" id="themeBtnMidnight" onclick="setTheme('midnight-crimson')">Midnight</button>
+                      <button class="sim-theme-btn" id="themeBtnVoid" onclick="setTheme('void')">Void</button>
+                      <button class="sim-theme-btn" id="themeBtnSolar" onclick="setTheme('solar')">Solar</button>
+                      <button class="sim-theme-btn" id="themeBtnArctic" onclick="setTheme('arctic')">Arctic</button>
+                      <button class="sim-theme-btn" id="themeBtnHacker" onclick="setTheme('hacker')">Hacker</button>
+                    </div>
+                  </div>
+                  <div class="sim-settings-section">
+                    <label class="sim-settings-label">GCC Build Flags</label>
+                    <input type="text" class="sim-settings-input" value="-Wall -Wextra -std=c11">
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- Main Workspace (Editor + Bottom Dock) -->
+          <div class="sim-workspace">
+            <!-- Tabs -->
+            <div class="sim-tab-bar">
+              <div class="sim-tab active" id="activeEditorTab">
+                <i class="fa-solid fa-file-code" style="color:#00a3ff;"></i> <span id="activeEditorTabName">hello.c</span>
+                <span class="sim-tab-close" onclick="closeEditorTab()">&times;</span>
+              </div>
+            </div>
+
+            <!-- Editor Action Bar -->
+            <div class="sim-toolbar">
+              <div class="sim-toolbar-actions" style="display:flex; align-items:center; gap:8px;">
+                <button class="sim-tool-btn btn-run" onclick="triggerBuildAndRun()" title="Build and Run project">
+                  <i class="fa-solid fa-play"></i> Run (Ctrl+R)
+                </button>
+                <button class="sim-tool-btn" onclick="triggerBuildOnly()" title="Build code binary">
+                  <i class="fa-solid fa-wrench"></i> Build (Ctrl+B)
+                </button>
+                <span style="font-size: 0.7rem; color: var(--sim-text-muted); margin-left: 4px;">
+                  <i class="fa-solid fa-keyboard" style="color:var(--sim-accent);"></i> Click below to write code!
+                </span>
+              </div>
+              <div class="sim-toolbar-settings">
+                <label class="sim-beginner-toggle">
+                  <input type="checkbox" id="beginnerModeToggle" onchange="toggleBeginnerMode()">
+                  <span>Beginner Mode</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Code Area container -->
+            <div class="sim-editor-content">
+              <!-- Line Numbers Gutter -->
+              <div class="sim-lines-gutter" id="linesGutter">
+                <!-- Javascript will load line numbers -->
+              </div>
+              <!-- Code Code -->
+              <div class="sim-code-area" id="codeArea" contenteditable="true" spellcheck="false">
+                <!-- Javascript will load code snippet -->
+              </div>
+            </div>
+
+            <!-- Bottom Dock Output Panels -->
+            <div class="sim-bottom-dock" id="bottomDock">
+              <div class="sim-dock-tabs">
+                <div class="sim-dock-tab active" id="dockTabTerminal" onclick="switchDockTab('terminal')">
+                  <i class="fa-solid fa-terminal"></i> Terminal
+                </div>
+                <div class="sim-dock-tab" id="dockTabBuild" onclick="switchDockTab('build')">
+                  <i class="fa-solid fa-code-commit"></i> Build Output
+                </div>
+                <div class="sim-dock-tab" id="dockTabMemory" onclick="switchDockTab('memory')">
+                  <i class="fa-solid fa-diagram-project"></i> Memory Visualizer
+                </div>
+                <div class="sim-dock-tab" id="dockTabTranslator" onclick="switchDockTab('translator')">
+                  <i class="fa-solid fa-language"></i> Error Translator
+                </div>
+              </div>
+              
+              <div class="sim-dock-content" id="dockContent">
+                <!-- Console terminal output (default) -->
+                <div id="paneTerminal">
+                  <div class="sim-terminal-output" id="terminalOutput">volt-shell: compiler ready. Click "Run" to execute program.</div>
+                  <div class="sim-terminal-input-row" id="terminalInputRow" style="display: none;">
+                    <span class="sim-terminal-prompt">user@voltc:~$ </span>
+                    <span id="terminalInputValue"></span>
+                    <span class="sim-terminal-cursor"></span>
+                  </div>
+                </div>
+
+                <!-- Build Output -->
+                <div id="paneBuild" style="display: none;">
+                  <div id="buildOutput" style="white-space: pre-wrap; font-family: var(--font-mono);">
+                    No builds executed yet.
+                  </div>
+                </div>
+
+                <!-- Memory Visualizer -->
+                <div id="paneMemory" style="display: none;">
+                  <div class="sim-visualizer-container">
+                    <div class="sim-vis-layout">
+                      <div class="sim-vis-section">
+                        <div class="sim-vis-section-title">Stack Frame</div>
+                        <table class="sim-vis-table">
+                          <thead>
+                            <tr><th>Name</th><th>Type</th><th>Value</th><th>Address</th></tr>
+                          </thead>
+                          <tbody id="memoryStackBody">
+                            <tr><td colspan="4" style="color:var(--sim-text-muted); text-align:center;">Stack empty. Build first.</td></tr>
+                          </tbody>
+                        </table>
+                      </div>
+                      <div class="sim-vis-section">
+                        <div class="sim-vis-section-title">Heap Space</div>
+                        <table class="sim-vis-table">
+                          <thead>
+                            <tr><th>Address</th><th>Block Size</th><th>Content</th></tr>
+                          </thead>
+                          <tbody id="memoryHeapBody">
+                            <tr><td colspan="3" style="color:var(--sim-text-muted); text-align:center;">Heap empty.</td></tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Error Translator -->
+                <div id="paneTranslator" style="display: none;">
+                  <div class="sim-translator-box" id="translatorContent">
+                    <div style="color: var(--sim-text-muted);">No compiler errors. Translator idle.</div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            <!-- Status Bar -->
+            <footer class="sim-status-bar">
+              <div class="sim-status-left">
+                <div class="sim-status-item">
+                  <span class="sim-status-pulse"></span> Ready
+                </div>
+                <div class="sim-status-item"><i class="fa-solid fa-code-fork"></i> main</div>
+              </div>
+              <div class="sim-status-right">
+                <div class="sim-status-item">Ln 1, Col 1</div>
+                <div class="sim-status-item">UTF-8</div>
+                <div class="sim-status-item" id="simStatusGCC">gcc 11.4.0</div>
+              </div>
+            </footer>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Comparison Section: VoltC v1 vs v2 -->
+  <section id="comparison" class="evolution section-padding">
+    <div class="container">
+      <div class="section-title">The Evolution: VoltC v1 vs v2</div>
+      <p class="section-subtitle">VoltC v2 is a massive upgrade across every layer, introducing full Git support, deep AI assistance, and professional PTY persistent terminal streams.</p>
+      
+      <div class="comp-table-container">
+        <table class="comp-table">
+          <thead>
+            <tr>
+              <th>Feature</th>
+              <th>VoltC v1</th>
+              <th class="v2-col">VoltC v2 <span class="badge-stood-out">Stands Out</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Git Integration</strong></td>
+              <td><span class="comp-icon-no">&times;</span> None</td>
+              <td class="v2-col"><span class="comp-icon-yes">&#10003;</span> Stage/commit/diff changes directly inside sidebar drawer, branch switches, push/pull</td>
+            </tr>
+            <tr>
+              <td><strong>Terminal Stream</strong></td>
+              <td><span class="comp-icon-yes">&#10003;</span> Sandbox WebSocket terminal</td>
+              <td class="v2-col"><span class="comp-icon-yes">&#10003;</span> Persistent PTY (resizes, reconnects, process history buffer)</td>
+            </tr>
+            <tr>
+              <td><strong>Memory Visualizer</strong></td>
+              <td><span class="comp-icon-yes">&#10003;</span> Static Stack visualizer</td>
+              <td class="v2-col"><span class="comp-icon-yes">&#10003;</span> Dynamic Stack + Heap representation with interactive pointer indicators</td>
+            </tr>
+            <tr>
+              <td><strong>Themes System</strong></td>
+              <td>Midnight Crimson only</td>
+              <td class="v2-col"><span class="comp-icon-yes">&#10003;</span> 5 presets (Midnight, Void, Solar, Arctic, Hacker) + Appearance customizer</td>
+            </tr>
+            <tr>
+              <td><strong>Compiler Sanitizers</strong></td>
+              <td><span class="comp-icon-no">&times;</span> Standard flag presets</td>
+              <td class="v2-col"><span class="comp-icon-yes">&#10003;</span> Automated Address/Undefined sanitizer toggle (<code>-fsanitize=address,undefined</code>)</td>
+            </tr>
+            <tr>
+              <td><strong>C Starter Templates</strong></td>
+              <td>2 files</td>
+              <td class="v2-col"><span class="comp-icon-yes">&#10003;</span> 12 curated templates for beginners to advanced structures (Makefiles, structs, linked lists)</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Comparison Section: VoltC vs Nano vs Gedit -->
+      <div class="section-title" style="margin-top: 60px;">VoltC vs. Traditional Ubuntu Editors</div>
+      <p class="section-subtitle">How VoltC bridges the gap between terminal environments and heavyweight desktop IDEs.</p>
+      
+      <div class="comp-table-container">
+        <table class="comp-table">
+          <thead>
+            <tr>
+              <th>Feature / Aspect</th>
+              <th>Nano</th>
+              <th>Gedit</th>
+              <th class="v2-col" style="border-left: 1px solid rgba(230, 46, 82, 0.3); border-right: 1px solid rgba(230, 46, 82, 0.3);">VoltC v2 <span class="badge-stood-out">Ideal Choice</span></th>
+              <th>CLion / Eclipse</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>User Interface</strong></td>
+              <td>Terminal TUI (Keyboard-only)</td>
+              <td>Basic GUI text box</td>
+              <td class="v2-col" style="background-color: rgba(230, 46, 82, 0.02); border-left: 1px solid var(--border-color); border-right: 1px solid var(--border-color);"><strong>Modern GUI (Monaco Editor)</strong></td>
+              <td>Heavy desktop workspace</td>
+            </tr>
+            <tr>
+              <td><strong>Startup Speed</strong></td>
+              <td><span class="comp-icon-yes">&#10003;</span> Instant (&lt; 0.1s)</td>
+              <td><span class="comp-icon-yes">&#10003;</span> Very Fast (~1s)</td>
+              <td class="v2-col" style="background-color: rgba(230, 46, 82, 0.02); border-left: 1px solid var(--border-color); border-right: 1px solid var(--border-color);"><span class="comp-icon-yes">&#10003;</span> Fast (~1.5s)</td>
+              <td><span class="comp-icon-no">&times;</span> Slow (5 - 15s)</td>
+            </tr>
+            <tr>
+              <td><strong>RAM Footprint</strong></td>
+              <td><span class="comp-icon-yes">&#10003;</span> Minimal (~2 MB)</td>
+              <td><span class="comp-icon-yes">&#10003;</span> Low (~20 MB)</td>
+              <td class="v2-col" style="background-color: rgba(230, 46, 82, 0.02); border-left: 1px solid var(--border-color); border-right: 1px solid var(--border-color);">Light (~80 MB)</td>
+              <td><span class="comp-icon-no">&times;</span> Heavy (1 GB+)</td>
+            </tr>
+            <tr>
+              <td><strong>Compiler Bindings</strong></td>
+              <td>Manual shell compilation</td>
+              <td>None (uses external shell)</td>
+              <td class="v2-col" style="background-color: rgba(230, 46, 82, 0.02); border-left: 1px solid var(--border-color); border-right: 1px solid var(--border-color);"><span class="comp-icon-yes">&#10003;</span> Sandboxed 1-Click Run</td>
+              <td>Complex configurations</td>
+            </tr>
+            <tr>
+              <td><strong>LSP Diagnostics</strong></td>
+              <td><span class="comp-icon-no">&times;</span> No</td>
+              <td>Basic highlighting only</td>
+              <td class="v2-col" style="background-color: rgba(230, 46, 82, 0.02); border-left: 1px solid var(--border-color); border-right: 1px solid var(--border-color);"><span class="comp-icon-yes">&#10003;</span> Full Clangd diagnostics</td>
+              <td>Full codebase indexing</td>
+            </tr>
+            <tr>
+              <td><strong>Live Memory visualization</strong></td>
+              <td><span class="comp-icon-no">&times;</span> No</td>
+              <td><span class="comp-icon-no">&times;</span> No</td>
+              <td class="v2-col" style="background-color: rgba(230, 46, 82, 0.02); border-left: 1px solid var(--border-color); border-right: 1px solid var(--border-color);"><span class="comp-icon-yes">&#10003;</span> Live Stack & Heap visualizer</td>
+              <td>Advanced GDB integrations</td>
+            </tr>
+            <tr>
+              <td><strong>Git Integration</strong></td>
+              <td>No (CLI only)</td>
+              <td>No (CLI only)</td>
+              <td class="v2-col" style="background-color: rgba(230, 46, 82, 0.02); border-left: 1px solid var(--border-color); border-right: 1px solid var(--border-color);"><span class="comp-icon-yes">&#10003;</span> Built-in graphical panel</td>
+              <td>Advanced Git dashboard</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- Deep Dive Showcase Cards -->
+  <section id="features" class="section-padding">
+    <div class="container">
+      <div class="section-title">Core Architecture Features</div>
+      <p class="section-subtitle">VoltC is tailored for local speed and visual understanding, making it the perfect platform for students and expert C developers alike.</p>
+      
+      <div class="features-grid">
+        
+        <!-- Card 1: Git Integration -->
+        <div class="feature-card neon-glow">
+          <div class="feature-icon"><i class="fa-solid fa-code-branch"></i></div>
+          <h3>Git Integration</h3>
+          <p>Manage code versions without opening a terminal. View untracked and modified files, stage changes, view syntax-highlighted diffs, and write commit messages in the panel.</p>
+          <div class="feature-interactive-preview" style="background:#0b0809; color:#ffb800; padding:12px; font-family:var(--font-mono); font-size:0.75rem;">
+            <span>branch: main</span><br>
+            <span>[M] buggy.c (unstaged changes)</span>
+          </div>
+        </div>
+
+        <!-- Card 2: Memory Visualizer -->
+        <div class="feature-card neon-glow">
+          <div class="feature-icon"><i class="fa-solid fa-diagram-project"></i></div>
+          <h3>Dynamic Memory Visualizer</h3>
+          <p>Understand pointer variables and dynamic allocations instantly. Renders heap variables, stack boundaries, and links them with live arrow structures during compilation builds.</p>
+          <div class="feature-interactive-preview">
+            <div class="vis-card-block">
+              <div class="vis-card-box">int *ptr</div>
+              <div class="vis-card-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+              <div class="vis-card-box">Addr: 0x7ffd5</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 3: PTY Sandboxed Compiler -->
+        <div class="feature-card neon-glow">
+          <div class="feature-icon"><i class="fa-solid fa-shield-halved"></i></div>
+          <h3>Sandboxed Compilation</h3>
+          <p>Compiles in isolated workspace boundaries with a default 10s subprocess timeout that stops infinite loop freezes before they brick your Linux desktop resources.</p>
+          <div class="feature-interactive-preview" style="background:#0b0809; color:#00ff66;">
+            <span>$ gcc buggy.c -o out</span><br>
+            <span style="color:#ff4d4d;">[TIMEOUT ERROR] Process terminated.</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Installation / Quick Start Section -->
+  <section id="install" class="section-padding" style="background-color: rgba(15, 11, 12, 0.3); border-top: 1px solid var(--border-color);">
+    <div class="container">
+      <div class="section-title">Install VoltC on Ubuntu</div>
+      <p class="section-subtitle">Choose your preferred installation method. The stable snap includes all environment plugins boxed out of the bag.</p>
+      
+      <div class="install-tabs-container">
+        <!-- Tabs Buttons -->
+        <div class="install-tabs">
+          <button class="install-tab-btn active" onclick="switchInstallTab('snap')">Snap (Recommended)</button>
+          <button class="install-tab-btn" onclick="switchInstallTab('deb')">Debian Package</button>
+          <button class="install-tab-btn" onclick="switchInstallTab('source')">Build from Source</button>
+        </div>
+
+        <!-- Terminals Content -->
+        <div class="install-terminal">
+          <div class="terminal-header">
+            <div class="terminal-title">
+              <i class="fa-solid fa-terminal" style="color:var(--accent-crimson);"></i> terminal
+            </div>
+            <div style="font-size:0.75rem; color:var(--text-muted);">Ubuntu Shell</div>
+          </div>
+          
+          <div class="terminal-body">
+            <!-- Copy button -->
+            <button class="terminal-btn-copy" onclick="copyTerminalCode()" id="copyCodeBtn">
+              <i class="fa-solid fa-copy"></i> Copy
+            </button>
+
+            <!-- Snap Panel -->
+            <div class="install-content-panel active" id="installPaneSnap">
+              <div class="terminal-line">
+                <span class="terminal-prompt">$ </span><span class="terminal-cmd" id="snapCode">sudo snap install voltc</span>
+              </div>
+              <div class="terminal-line">
+                <span class="terminal-comment"># VoltC will auto-connect plugs for network, home and X11 graphic outputs.</span>
+              </div>
+            </div>
+
+            <!-- Deb Panel -->
+            <div class="install-content-panel" id="installPaneDeb">
+              <div class="terminal-line">
+                <span class="terminal-prompt">$ </span><span class="terminal-cmd" id="debCode">wget https://github.com/CODExGAMERZ/VoltC/releases/download/v2.0/voltc_2.0_amd64.deb<br>sudo dpkg -i voltc_2.0_amd64.deb<br>sudo apt-get install -f</span>
+              </div>
+            </div>
+
+            <!-- Source Panel -->
+            <div class="install-content-panel" id="installPaneSource">
+              <div class="terminal-line">
+                <span class="terminal-prompt">$ </span><span class="terminal-cmd" id="sourceCode">git clone https://github.com/CODExGAMERZ/VoltC.git<br>cd VoltC && git checkout v2<br>pip3 install -r requirements.txt<br>python3 server.py</span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Community, Feedback & Updates Section -->
+  <section id="community" class="section-padding" style="background-color: var(--bg-surface); border-top: 1px solid var(--border-color);">
+    <div class="container">
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 48px;">
+        
+        <!-- Newsletter / Subscribe block -->
+        <div class="community-col">
+          <div class="badge badge-crimson" style="margin-bottom: 16px;"><i class="fa-solid fa-bell"></i> STAY UPDATED</div>
+          <h2 style="font-family: var(--font-display); font-size: 2rem; font-weight: 800; margin-bottom: 16px; color:#fff;">Get release notices</h2>
+          <p style="color: var(--text-secondary); margin-bottom: 24px; font-size: 0.95rem; max-width: 420px;">Subscribe to receive release announcements, compiler flag presets updates, and configuration recommendations. No spam, unsubscribe anytime.</p>
+          <div style="display: flex; gap: 10px;" class="newsletter-form-container">
+            <input type="email" id="newsletterEmail" placeholder="Enter your email" style="flex: 1; padding: 12px 16px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: rgba(0,0,0,0.2); color: var(--text-primary); outline: none;">
+            <button class="btn-primary" onclick="subscribeNewsletter()" style="padding: 12px 24px;"><i class="fa-solid fa-paper-plane"></i> Notify Me</button>
+          </div>
+          <div id="subscribeSuccessMessage" style="display: none; color: var(--color-success); font-size: 0.85rem; margin-top: 8px; font-weight: 600;">
+            <i class="fa-solid fa-circle-check"></i> Subscribed! We will notify you at <span id="subscribedEmailSpan"></span>.
+          </div>
+        </div>
+
+        <!-- Feedback & suggestions block -->
+        <div class="community-col" id="feedback-form-container">
+          <div class="badge badge-crimson" style="margin-bottom: 16px;"><i class="fa-solid fa-comment-dots"></i> FEEDBACK</div>
+          <h2 style="font-family: var(--font-display); font-size: 2rem; font-weight: 800; margin-bottom: 16px; color:#fff;">Suggest improvements</h2>
+          <p style="color: var(--text-secondary); margin-bottom: 24px; font-size: 0.95rem;">Have a feature request or found a bug? Send your feedback directly to the team.</p>
+          <form id="feedbackForm" onsubmit="submitFeedbackForm(event)" style="display: flex; flex-direction: column; gap: 12px;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+              <input type="text" id="feedbackName" placeholder="Your Name" required style="padding: 10px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: rgba(0,0,0,0.2); color: var(--text-primary); outline: none;">
+              <input type="email" id="feedbackEmail" placeholder="Your Email" required style="padding: 10px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: rgba(0,0,0,0.2); color: var(--text-primary); outline: none;">
+            </div>
+            <select id="feedbackCategory" required style="padding: 10px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: rgba(0,0,0,0.2); color: var(--text-primary); outline: none;">
+              <option value="" disabled selected style="background-color: var(--bg-surface);">Select Category</option>
+              <option value="General Feedback" style="background-color: var(--bg-surface);">General Feedback</option>
+              <option value="Feature Request" style="background-color: var(--bg-surface);">Feature Request</option>
+              <option value="Bug Report" style="background-color: var(--bg-surface);">Bug Report</option>
+              <option value="Improvement Suggestion" style="background-color: var(--bg-surface);">Improvement Suggestion</option>
+            </select>
+            <textarea id="feedbackMessage" rows="3" placeholder="Describe your suggestion..." required style="padding: 10px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: rgba(0,0,0,0.2); color: var(--text-primary); outline: none; font-family: inherit; resize: none;"></textarea>
+            <button type="submit" id="feedbackSubmitBtn" class="btn-primary" style="align-self: flex-start; padding: 10px 20px;"><i class="fa-solid fa-paper-plane"></i> Send</button>
+          </form>
+          <div id="feedbackSuccessMessage" style="display: none; color: var(--color-success); font-size: 0.85rem; margin-top: 8px; font-weight: 600;">
+            <i class="fa-solid fa-circle-check"></i> Feedback sent successfully!
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-main">
+        <div class="footer-brand">
+          <h4><span>⚡</span> VoltC IDE</h4>
+          <p>Making Linux C/C++ development visual, accessible, and faster. Proudly built using Python, FastAPI, and Monaco.</p>
+        </div>
+        <div class="footer-links-col">
+          <h5>Project</h5>
+          <ul>
+            <li><a href="#simulator">Simulator</a></li>
+            <li><a href="#features">Features</a></li>
+            <li><a href="#comparison">v1 vs v2 Comparison</a></li>
+            <li><a href="https://github.com/CODExGAMERZ/VoltC" target="_blank"><i class="fa-brands fa-github"></i> GitHub Codebase</a></li>
+          </ul>
+        </div>
+        <div class="footer-links-col">
+          <h5>Documentation</h5>
+          <ul>
+            <li><a href="#install">Installation Guides</a></li>
+            <li><a href="https://github.com/CODExGAMERZ/VoltC/issues" target="_blank">Reporting Issues</a></li>
+          </ul>
+        </div>
+      </div>
+      
+      <div class="footer-bottom">
+        <div class="footer-copyright">
+          &copy; 2026 VoltC Development Team. Licensed under the MIT License.
+        </div>
+        <div class="footer-socials">
+          <a href="https://github.com/CODExGAMERZ/VoltC" class="footer-social-link" target="_blank"><i class="fa-brands fa-github"></i></a>
+          <a href="#" class="footer-social-link"><i class="fa-solid fa-envelope"></i></a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Glassmorphism Login Modal -->
+  <div class="login-modal-overlay" id="loginModalOverlay" onclick="closeLoginModalOutside(event)">
+    <div class="login-modal-card neon-glow">
+      <button class="login-modal-close" onclick="closeLoginModal()">&times;</button>
+      
+      <div class="login-tabs">
+        <button class="login-tab-btn active" id="tabBtnLogin" onclick="switchLoginTab('login')">Sign In</button>
+        <button class="login-tab-btn" id="tabBtnRegister" onclick="switchLoginTab('register')">Sign Up</button>
+      </div>
+
+      <!-- Sign In Pane -->
+      <div class="login-pane active" id="paneLogin">
+        <form onsubmit="handleLoginSubmit(event)" style="display: flex; flex-direction: column; gap: 16px; margin-top: 16px;">
+          <div class="input-group">
+            <label>Email Address</label>
+            <input type="email" id="loginEmail" required placeholder="name@domain.com">
+          </div>
+          <div class="input-group">
+            <label>Password</label>
+            <input type="password" id="loginPassword" required placeholder="••••••••">
+          </div>
+          <button type="submit" class="btn-primary" style="width: 100%; justify-content: center; font-weight: bold;"><i class="fa-solid fa-right-to-bracket"></i> Login</button>
+        </form>
+      </div>
+
+      <!-- Sign Up Pane -->
+      <div class="login-pane" id="paneRegister">
+        <form onsubmit="handleRegisterSubmit(event)" style="display: flex; flex-direction: column; gap: 16px; margin-top: 16px;">
+          <div class="input-group">
+            <label>Email Address</label>
+            <input type="email" id="registerEmail" required placeholder="name@domain.com">
+          </div>
+          <div class="input-group">
+            <label>Create Password</label>
+            <input type="password" id="registerPassword" required placeholder="••••••••">
+          </div>
+          <div class="input-group">
+            <label>Confirm Password</label>
+            <input type="password" id="registerConfirmPassword" required placeholder="••••••••">
+          </div>
+          <button type="submit" class="btn-primary" style="width: 100%; justify-content: center; font-weight: bold;"><i class="fa-solid fa-user-plus"></i> Create Account</button>
+        </form>
+      </div>
+
+      <!-- OAuth Mocking -->
+      <div style="margin-top: 24px; text-align: center;">
+        <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; position: relative;">
+          <span style="background: var(--bg-surface); padding: 0 10px; z-index: 2; position: relative;">Or continue with</span>
+          <div style="position: absolute; top: 50%; left: 0; right: 0; height: 1px; background: var(--border-color); z-index: 1;"></div>
+        </div>
+        <div style="display: flex; justify-content: center; gap: 12px;">
+          <button class="btn-secondary" onclick="mockOAuthLogin('GitHub')" style="padding: 10px 20px; font-size: 0.85rem;"><i class="fa-brands fa-github"></i> GitHub</button>
+          <button class="btn-secondary" onclick="mockOAuthLogin('Google')" style="padding: 10px 20px; font-size: 0.85rem;"><i class="fa-brands fa-google"></i> Google</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="app.js"></script>
+</body>
+</html>
