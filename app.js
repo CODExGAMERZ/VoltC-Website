@@ -98,12 +98,14 @@ window.addEventListener('DOMContentLoaded', () => {
   
   // Set up Supabase Auth state change listener if client is active
   if (supabaseClient) {
-    supabaseClient.auth.onAuthStateChange((event, session) => {
+    supabaseClient.auth.onAuthStateChange(async (event, session) => {
       if (session && session.user) {
         updateUserSessionUI(session.user.email);
+        await syncProfileFromDatabase(session.user);
       } else {
         document.getElementById('navLoginBtn').style.display = 'inline-flex';
         document.getElementById('userProfileMenu').style.display = 'none';
+        loadProfileFromLocalStorage();
       }
     });
   }
@@ -1065,7 +1067,10 @@ function loadProfileFromLocalStorage() {
       console.error("Failed to parse stored profile data", e);
     }
   }
-  
+  applyProfileToUI();
+}
+
+function applyProfileToUI() {
   // Apply saved state to UI elements
   const avatarElements = [
     document.getElementById('userAvatar'),
@@ -1080,6 +1085,94 @@ function loadProfileFromLocalStorage() {
   const displayNameEl = document.getElementById('profileModalDisplayName');
   if (displayNameEl && profileData.displayName) {
     displayNameEl.innerText = profileData.displayName;
+  }
+}
+
+// Fetch Profile from Supabase Cloud
+async function syncProfileFromDatabase(user) {
+  if (!supabaseClient || !user) return;
+  
+  try {
+    const { data, error } = await supabaseClient
+      .from('profiles')
+      .select('*')
+      .eq('id', user.id)
+      .single();
+      
+    if (error && error.code !== 'PGRST116') { // PGRST116 is PostgreSQL code for "zero rows returned"
+      throw error;
+    }
+    
+    if (data) {
+      profileData = {
+        displayName: data.display_name || 'VoltC Developer',
+        bio: data.bio || 'Full-stack Ubuntu developer...',
+        gitToken: data.github_token || '',
+        supabaseUrl: data.supabase_url || '',
+        supabaseKey: data.supabase_key || '',
+        avatar: data.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=80&q=80'
+      };
+      
+      applyProfileToUI();
+    } else {
+      // Create a default database profile record for new user
+      await supabaseClient.from('profiles').insert({
+        id: user.id,
+        display_name: profileData.displayName,
+        bio: profileData.bio,
+        avatar: profileData.avatar
+      });
+    }
+  } catch (err) {
+    console.error("Supabase Profile Sync Warning:", err);
+    showToast("Sync Offline", "Could not fetch profile from cloud database. Using local cache.", "warning");
+  }
+}
+
+// Upsert Profile values helper
+async function saveProfileField(updateObject) {
+  // 1. Update active local memory state
+  profileData = { ...profileData, ...updateObject };
+  
+  // 2. Fetch logged-in user if client is active
+  let loggedInUser = null;
+  if (supabaseClient) {
+    try {
+      const { data: { user } } = await supabaseClient.auth.getUser();
+      loggedInUser = user;
+    } catch (e) {
+      console.warn("Could not retrieve Supabase user session context:", e);
+    }
+  }
+  
+  // 3. Fallback to local storage if not authenticated
+  if (!supabaseClient || !loggedInUser) {
+    localStorage.setItem('voltc_profile_data', JSON.stringify(profileData));
+    return true;
+  }
+  
+  // 4. Save to Postgres Profiles table
+  try {
+    const dbUpdate = {};
+    if (updateObject.displayName !== undefined) dbUpdate.display_name = updateObject.displayName;
+    if (updateObject.bio !== undefined) dbUpdate.bio = updateObject.bio;
+    if (updateObject.gitToken !== undefined) dbUpdate.github_token = updateObject.gitToken;
+    if (updateObject.supabaseUrl !== undefined) dbUpdate.supabase_url = updateObject.supabaseUrl;
+    if (updateObject.supabaseKey !== undefined) dbUpdate.supabase_key = updateObject.supabaseKey;
+    if (updateObject.avatar !== undefined) dbUpdate.avatar = updateObject.avatar;
+
+    const { error } = await supabaseClient
+      .from('profiles')
+      .upsert({ id: loggedInUser.id, ...dbUpdate });
+      
+    if (error) throw error;
+    return true;
+  } catch (err) {
+    console.error("Supabase Profiles Cloud Save Error:", err);
+    showToast("Cloud Save Failed", `Failed to sync database: ${err.message}`, "error");
+    // fallback cache write
+    localStorage.setItem('voltc_profile_data', JSON.stringify(profileData));
+    return false;
   }
 }
 
@@ -1147,40 +1240,31 @@ function switchProfileTab(tab) {
 }
 
 // Form Submission Handlers
-function handleProfileSave(e) {
+async function handleProfileSave(e) {
   e.preventDefault();
   
   const displayName = document.getElementById('profileDisplayName').value.trim();
   const bio = document.getElementById('profileBio').value.trim();
 
-  profileData.displayName = displayName;
-  profileData.bio = bio;
-
-  // Save to localStorage
-  localStorage.setItem('voltc_profile_data', JSON.stringify(profileData));
-
-  // Sync visual labels
-  const displayNameEl = document.getElementById('profileModalDisplayName');
-  if (displayNameEl) displayNameEl.innerText = displayName;
-
-  showToast("Profile Updated", "Your bio and display details were saved successfully.", "success");
+  const success = await saveProfileField({ displayName, bio });
+  if (success) {
+    const displayNameEl = document.getElementById('profileModalDisplayName');
+    if (displayNameEl) displayNameEl.innerText = displayName;
+    showToast("Profile Updated", "Your bio and display details were saved successfully.", "success");
+  }
 }
 
-function handleCredentialsSave(e) {
+async function handleCredentialsSave(e) {
   e.preventDefault();
 
   const gitToken = document.getElementById('profileGitToken').value.trim();
   const supabaseUrl = document.getElementById('profileSupabaseUrl').value.trim();
   const supabaseKey = document.getElementById('profileSupabaseKey').value.trim();
 
-  profileData.gitToken = gitToken;
-  profileData.supabaseUrl = supabaseUrl;
-  profileData.supabaseKey = supabaseKey;
-
-  // Save to localStorage
-  localStorage.setItem('voltc_profile_data', JSON.stringify(profileData));
-
-  showToast("Credentials Secured", "API tokens and configuration keys updated.", "success");
+  const success = await saveProfileField({ gitToken, supabaseUrl, supabaseKey });
+  if (success) {
+    showToast("Credentials Secured", "API tokens and configuration keys updated.", "success");
+  }
 }
 
 // Avatar File Uploading Logic
@@ -1201,20 +1285,19 @@ function handleAvatarUpload(event) {
   }
 
   const reader = new FileReader();
-  reader.onload = function(e) {
+  reader.onload = async function(e) {
     const base64Url = e.target.result;
     
-    // Save to state and storage
-    profileData.avatar = base64Url;
-    localStorage.setItem('voltc_profile_data', JSON.stringify(profileData));
+    const success = await saveProfileField({ avatar: base64Url });
+    if (success) {
+      // Update avatar elements instantly
+      const avatarEl = document.getElementById('userAvatar');
+      const modalAvatarEl = document.getElementById('profileModalAvatar');
+      if (avatarEl) avatarEl.src = base64Url;
+      if (modalAvatarEl) modalAvatarEl.src = base64Url;
 
-    // Update avatar elements instantly
-    const avatarEl = document.getElementById('userAvatar');
-    const modalAvatarEl = document.getElementById('profileModalAvatar');
-    if (avatarEl) avatarEl.src = base64Url;
-    if (modalAvatarEl) modalAvatarEl.src = base64Url;
-
-    showToast("Avatar Changed", "Your new profile picture was uploaded successfully.", "success");
+      showToast("Avatar Changed", "Your new profile picture was uploaded successfully.", "success");
+    }
   };
 
   reader.readAsDataURL(file);
