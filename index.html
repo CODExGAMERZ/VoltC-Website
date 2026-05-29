@@ -13,6 +13,11 @@
   <meta property="og:description" content="A lightweight, desktop-native IDE powered by FastAPI and Monaco. Try the interactive simulator online!">
   <meta property="og:type" content="website">
   
+  <!-- Favicon & App Icon -->
+  <link rel="icon" type="image/png" href="logo.png">
+  <link rel="apple-touch-icon" href="logo.png">
+  <meta property="og:image" content="logo.png">
+
   <!-- Fonts & Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="style.css">
@@ -26,7 +31,10 @@
   <nav class="navbar" id="navbar">
     <div class="container navbar-container" style="display: flex; width: 100%; justify-content: space-between; align-items: center;">
       <a href="#" class="logo">
-        <span>⚡</span> VoltC
+        <svg width="24" height="24" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right: 6px;">
+          <path d="M18.5 4L9 18h5.5l-1 10L23 14h-5.5l1-10z" fill="#e62e52" stroke="#ff476b" stroke-width="0.5"/>
+        </svg>
+        VoltC
       </a>
       <div class="nav-links">
         <a href="#simulator" class="active">Simulator</a>

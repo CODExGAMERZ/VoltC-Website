@@ -2,28 +2,48 @@
 
 This repository contains the official showcase landing page and interactive IDE simulator for **VoltC** — a lightweight, native C/C++ IDE for Ubuntu Linux.
 
-## 🚀 Live Demo & Hosting
-The project is built using standard HTML, CSS, and Vanilla JavaScript, making it ideal for hosting on static hosting providers like **Vercel**, **GitHub Pages**, or **Netlify**.
+**Live Site**: [volt-c.vercel.app](https://volt-c.vercel.app/)
 
-### Features
-* **Interactive IDE Simulator**: Write custom C code, run compilations, trigger missing semicolon error dots in the gutter, and inspect visual variables on the Stack and Heap.
-* **Supabase Auth**: Integrated Sign Up, Sign In, Google/GitHub OAuth, and log out handlers.
-* **Zero Local Storage Writes**: All sessions, auth tokens, and forms are validated and run strictly in-memory (RAM) to keep data out of local storage.
+---
+
+## ✨ Features
+
+- **Interactive IDE Simulator** — Write custom C code, run compilations, trigger missing semicolon error dots in the gutter, and inspect visual variables on the Stack and Heap.
+- **5 Editor Themes** — Midnight Crimson (default), Void, Solar, Arctic, and Hacker.
+- **v1 / v2 Version Toggle** — Switch between VoltC v1 and v2 interfaces inside the simulator.
+- **User Auth (Mock)** — Sign Up, Login, Google OAuth, and GitHub OAuth modals with in-memory validation.
+- **Feedback Form** — Community feedback form with inline Send/Sent state.
+- **Newsletter Signup** — "Notify Me" subscription container with in-memory validation.
+- **Responsive Design** — Fully responsive across desktop and mobile viewports.
+- **Zero Local Storage** — All sessions, auth tokens, and form data are handled strictly in-memory. Nothing is written to `localStorage` or `sessionStorage`.
+
+---
+
+## 📂 Project Structure
+
+```
+Website/
+├── index.html      # Main HTML page
+├── style.css       # All styles and design tokens
+├── app.js          # All JavaScript logic (simulator, auth, forms)
+├── logo.png        # VoltC logo (512x512 PNG, transparent)
+├── logo.svg        # VoltC logo (SVG vector, transparent)
+├── vercel.json     # Vercel deployment config
+├── .gitignore      # Git ignore rules
+└── README.md       # This file
+```
 
 ---
 
 ## 🛠️ Local Development & Preview
-To run the website locally on your computer:
 
 ### Option A: Python (Built-in)
-Run the following in this folder:
 ```bash
 python -m http.server 8000
 ```
 Then visit: `http://localhost:8000`
 
 ### Option B: Node.js / NPM
-Run the following in this folder:
 ```bash
 npx http-server -p 8000
 ```
@@ -31,13 +51,38 @@ Then visit: `http://localhost:8000`
 
 ---
 
-## 🔒 Supabase Database Configuration
-The website is pre-configured with a live Supabase backend connection. To point it to your own Supabase project:
+## 🎨 Tech Stack
+
+| Layer | Technology |
+|-------|------------|
+| Structure | HTML5 |
+| Styling | Vanilla CSS (custom design tokens) |
+| Logic | Vanilla JavaScript (ES6+) |
+| Fonts | Google Fonts (Inter, Outfit, Fira Code) |
+| Icons | Font Awesome 6 |
+| Hosting | Vercel (static) |
+
+---
+
+## 🔒 Future: Supabase Auth & Database
+
+To add live user authentication and data storage:
 1. Create a free project on [Supabase](https://supabase.com).
-2. Go to **Settings** -> **API** and copy your **Project URL** and **Anon Public Key**.
-3. Open `app.js` and update the variables at the top of the file:
+2. Go to **Settings** → **API** and copy your **Project URL** and **Anon Public Key**.
+3. Add the Supabase JS SDK to `index.html`:
+   ```html
+   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+   ```
+4. Initialize the client in `app.js`:
    ```javascript
    const SUPABASE_URL = 'https://your-project-id.supabase.co';
    const SUPABASE_ANON_KEY = 'your-anon-public-key';
+   const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
    ```
-4. Deploy the site, and the authentication will run live connected to your database!
+5. Deploy the site, and authentication will run live connected to your database!
+
+---
+
+## 📜 License
+
+© 2026 VoltC Team. All rights reserved.
