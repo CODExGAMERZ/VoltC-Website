@@ -14,7 +14,7 @@ if (isSupabaseConfigured) {
   if (window.supabase) {
     supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
       auth: {
-        persistSession: false // Keeps credentials out of localStorage (in-memory only). Set to true if you want users to stay logged in across page reloads.
+        persistSession: true // Keeps session token stored in localStorage to stay logged in across page reloads.
       }
     });
     console.log("VoltC Auth: Supabase Client initialized successfully.");
