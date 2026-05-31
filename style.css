@@ -2203,3 +2203,143 @@ code, pre {
   box-shadow: 0 4px 16px rgba(230, 46, 82, 0.6);
 }
 
+/* --- Cross-Device Responsiveness Media Queries --- */
+
+/* Hamburger Button Styling */
+.nav-hamburger {
+  display: none;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 22px;
+  height: 16px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  z-index: 150;
+}
+
+.nav-hamburger span {
+  width: 100%;
+  height: 2px;
+  background-color: var(--text-primary);
+  transition: all var(--transition-fast);
+  transform-origin: left;
+}
+
+.nav-hamburger.active span:nth-child(1) {
+  transform: rotate(45deg);
+}
+
+.nav-hamburger.active span:nth-child(2) {
+  opacity: 0;
+  transform: scale(0);
+}
+
+.nav-hamburger.active span:nth-child(3) {
+  transform: rotate(-45deg);
+}
+
+@media (max-width: 992px) {
+  /* Features Grid */
+  .features-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+  }
+}
+
+@media (max-width: 768px) {
+  /* Navbar */
+  .navbar-container {
+    position: relative;
+  }
+  .nav-hamburger {
+    display: flex;
+  }
+  .nav-links {
+    position: absolute;
+    top: 80px;
+    left: -24px;
+    right: -24px;
+    background-color: var(--bg-surface);
+    border-bottom: 1px solid var(--border-color);
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    padding: 24px;
+    display: none;
+    box-shadow: var(--shadow-md);
+  }
+  .nav-links.open {
+    display: flex;
+  }
+  .nav-actions {
+    display: none !important; /* Hide CTA button/actions inside navbar on mobile or put them in the nav-links menu */
+  }
+  
+  /* Hero */
+  .hero {
+    padding: 60px 0 40px 0;
+  }
+  .hero-ctas {
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+  .hero-ctas .btn-primary, .hero-ctas .btn-secondary {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* Features Grid */
+  .features-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  /* Comparison Table responsiveness */
+  .comp-table-container {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .comp-table {
+    min-width: 600px;
+  }
+
+  /* Simulator container on mobile */
+  .simulator-container {
+    height: auto;
+    min-height: 480px;
+  }
+  .sim-sidebar {
+    display: none !important;
+  }
+  .sim-drawer {
+    display: none !important;
+  }
+  .sim-workspace {
+    width: 100% !important;
+  }
+  .sim-bottom-dock {
+    height: 180px !important;
+  }
+  .sim-vis-layout {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  /* Community Forms stacking */
+  #community .container > div {
+    grid-template-columns: 1fr !important;
+    gap: 32px !important;
+  }
+  
+  /* Modals sizing */
+  .login-modal-card, .confirm-dialog-card {
+    width: 92% !important;
+    margin: 16px;
+    padding: 20px !important;
+  }
+}
+

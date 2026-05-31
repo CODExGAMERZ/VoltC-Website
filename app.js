@@ -1302,3 +1302,27 @@ function handleAvatarUpload(event) {
 
   reader.readAsDataURL(file);
 }
+
+// Toggle Mobile Navigation Menu Drawer
+function toggleMobileNav() {
+  const hamburger = document.getElementById('navHamburger');
+  const navLinks = document.querySelector('.nav-links');
+  if (hamburger && navLinks) {
+    const isOpen = navLinks.classList.toggle('open');
+    hamburger.classList.toggle('active', isOpen);
+  }
+}
+
+// Close mobile nav when clicking on a link
+window.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.nav-links a').forEach(link => {
+    link.addEventListener('click', () => {
+      const hamburger = document.getElementById('navHamburger');
+      const navLinks = document.querySelector('.nav-links');
+      if (hamburger && navLinks) {
+        navLinks.classList.remove('open');
+        hamburger.classList.remove('active');
+      }
+    });
+  });
+});
